@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import com.tutorial.rentACar.business.abstracts.CarService;
 import com.tutorial.rentACar.business.requests.CreateCarRequest;
+import com.tutorial.rentACar.business.requests.UpdateCarRequest;
 import com.tutorial.rentACar.business.responses.GetAllCarsResponse;
 import com.tutorial.rentACar.business.responses.GetCarByIdResponse;
 import com.tutorial.rentACar.business.rules.CarBusinessRules;
@@ -30,33 +31,48 @@ public class CarManager implements CarService {
 
 		List<GetAllCarsResponse> carsResponse = cars.stream()
 				.map(car -> this.modelMapperService.forResponse().map(car, GetAllCarsResponse.class)).toList();
-		
+
 		return carsResponse;
 	}
-	
+
 	@Override
 	public GetCarByIdResponse getById(int id) {
 		Car car = this.carRepository.findById(id).orElseThrow();
-		
+
 		GetCarByIdResponse carByIdResponse = modelMapperService.forResponse().map(car, GetCarByIdResponse.class);
-		
+
 		return carByIdResponse;
 	}
 
 	@Override
 	public void create(CreateCarRequest createCarRequest) {
 		this.carBusinessRules.checkIfPlateExists(createCarRequest.getPlate());
-		
-		Model model = modelRepository.findById(createCarRequest.getModelId()).orElseThrow();
-		
+
+		Model model = this.modelRepository.findById(createCarRequest.getModelId()).orElseThrow();
+
 		Car car = new Car();
 		car.setDailyPrice(createCarRequest.getDailyPrice());
 		car.setModelYear(createCarRequest.getModelYear());
 		car.setPlate(createCarRequest.getPlate());
 		car.setState(createCarRequest.getState());
 		car.setModel(model);
-		
-		carRepository.save(car);
+
+		this.carRepository.save(car);
+	}
+
+	@Override
+	public void update(UpdateCarRequest updateCarRequest) {
+		Car car = this.carRepository.findById(updateCarRequest.getId()).orElseThrow();
+		car.setPlate(updateCarRequest.getPlate());
+		car.setDailyPrice(updateCarRequest.getDailyPrice());
+		car.setState(updateCarRequest.getState());
+
+		this.carRepository.save(car);
+	}
+
+	@Override
+	public void delete(int id) {
+		this.carRepository.deleteById(id);
 	}
 
 }
